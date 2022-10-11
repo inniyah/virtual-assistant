@@ -381,7 +381,7 @@ class toolBox:
 
     def whereAmI(self):
         city, region = self.locationData('city','region')
-        loc = ("" if city is "" else city+", ") + region
+        loc = ("" if city == "" else city+", ") + region
         return random.choice(["you're in ","your location is "])+loc+random.choice([", NN",""])
 
     def googleMapSearch(self,search):
@@ -618,7 +618,7 @@ class toolBox:
                 root.quit()
             else:
                 musicDir = musicDir.replace("~", home)
-            if musicDir is "":
+            if musicDir == "":
                 return "Cancelled"
             PREFERENCES["musicDir"] = musicDir
             save_preferences()
@@ -1466,7 +1466,7 @@ class toolBox:
         if isinstance(contactNum, int):
             if key in CONTACTS[contactNum]:
                 if item is None:
-                    if action is 'remove':
+                    if action == 'remove':
                         if len(CONTACTS[contactNum][key]) == 0:
                             return "No items to remove"
                         elif len(CONTACTS[contactNum][key]) == 1:
@@ -1477,16 +1477,16 @@ class toolBox:
                                 return "Cancelled"
                             else:
                                 item = CONTACTS[contactNum][key][prompt]
-                    elif action is 'add':
+                    elif action == 'add':
                         item = self.promptANY("Enter new item:", cancel="cancel")
                         if item is False:
                             return "Cancelled"
-                    elif action is 'update':
+                    elif action == 'update':
                         item = self.promptANY("What should I set it as?", cancel="cancel")
                         if item is False:
                             return "Cancelled"
                 else:
-                    if action is 'remove':
+                    if action == 'remove':
                         if item not in CONTACTS[contactNum][key]:
                             return "Item to remove not found. Cancelled"
                 original = CONTACTS[contactNum][key]
@@ -1756,10 +1756,10 @@ if __name__ == '__main__':
     if len(args.cmd) > 0:
         assistant = VirtAssistant(single=True)
         rep = assistant.reply(args.cmd, oneline=True)
-        if rep is not '': print(rep)
+        if rep != '': print(rep)
     else:
         assistant = VirtAssistant()
         while True:
             text = input(primaryCommandPrompt)
             rep = assistant.reply(text)
-            if rep is not '': print(rep)
+            if rep != '': print(rep)
