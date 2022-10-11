@@ -8,6 +8,51 @@ import json
 
 session = requests.session()
 
+def custom_scanner(context):
+    internal_scanner = json.scanner.py_make_scanner(context)
+
+    parse_object = context.parse_object
+    parse_array = context.parse_array
+    parse_string = context.parse_string
+    strict = context.strict
+    parse_float = context.parse_float
+    parse_int = context.parse_int
+    parse_constant = context.parse_constant
+    object_hook = context.object_hook
+    object_pairs_hook = context.object_pairs_hook
+    memo = context.memo
+
+    def _scan_once(string, idx):
+        try:
+            nextchar = string[idx]
+        except IndexError:
+            raise StopIteration(idx) from None
+        if nextchar == '"':
+            return parse_string(string, idx + 1, strict)
+        elif nextchar == '{':
+            return parse_object((string, idx + 1), strict,
+                _scan_once, object_hook, object_pairs_hook, memo)
+        elif nextchar == '[':
+            return parse_array((string, idx + 1), _scan_once)
+        elif nextchar == 'u' and string[idx:idx + 9] == 'undefined':
+            return None, idx + 9
+        return internal_scanner(string, idx)
+
+    def scan_once(string, idx):
+        try:
+            return _scan_once(string, idx)
+        finally:
+            memo.clear()
+
+    return scan_once
+
+class CustomJSONDecoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # override scanner
+        self.scan_once = custom_scanner(self)
+
 
 def offlineTest(url='https://www.github.com/', timeout=None):
     try:
@@ -25,7 +70,11 @@ def syn(word,amount=10,return_original=True):
         url = "http://www.thesaurus.com/browse/{}".format(word)
         page = session.get(url,headers={"user-agent": "Mozilla/5.0"})  # session.get() is faster than requests.get()
         initial_state = re.search(r'<script>window\.INITIAL_STATE = (.+);</script>', page.text)
-        j = json.loads(initial_state.group(1))
+        try:
+            j = json.loads(initial_state.group(1), cls=CustomJSONDecoder)
+        except json.decoder.JSONDecodeError:
+            #~ print(f"Error decoding '{initial_state.group(1)}'")
+            raise
         posTabs = j['searchData']['tunaApiData']['posTabs']
         syns = [s['term'] for s in posTabs[0]['synonyms']]
         if syns:
